@@ -92,10 +92,10 @@ def signatureVerification(archivo_pub, archivo_mensaje, archivo_firma):
     n = base64_a_int(lineas[3].strip())
     Gx = base64_a_int(lineas[4].strip())
     Gy = base64_a_int(lineas[5].strip())
-    G = (Gx, Gy)
+    G = (Gx, Gy, 1)
     Bx = base64_a_int(lineas[6].strip())
     By = base64_a_int(lineas[7].strip())
-    B = (Bx, By)
+    B = (Bx, By, 1)
     
     with open(archivo_firma, "r") as f:
         lineas = f.readlines()
@@ -247,7 +247,13 @@ if __name__ == "__main__":
 
         elif opc == 2:
             print("\n--- Generación de firma ---")
+            archivo_priv = input("Nombre del archivo de la llave privada: ")
             archivo_mensaje = input("Nombre del archivo a firmar: ")
+            
+            mensaje = input("Escribe el mensaje que deseas firmar: ")
+            with open(archivo_mensaje, "w") as f:
+                f.write(mensaje)
+
             archivo_firma = input("Nombre del archivo para guardar la firma: ")
             r, s = signatureGeneration(archivo_priv, archivo_mensaje, archivo_firma)
             print(f"r, s = {r}, {s}")
@@ -255,10 +261,15 @@ if __name__ == "__main__":
 
         elif opc == 3:
             print("\n--- Verificación de firma ---")
+            archivo_pub = input("Nombre del archivo de la llave pública: ") # LÍNEA AÑADIDA
+            archivo_mensaje = input("Nombre del archivo a verificar: ") # LÍNEA AÑADIDA
+            archivo_firma = input("Nombre del archivo de la firma: ") # LÍNEA AÑADIDA
             print(signatureVerification(archivo_pub, archivo_mensaje, archivo_firma))
+            break
 
         elif opc == 4:
             ecdh()
+            break # Añadido para mantener la consistencia con tu código
 
         else:
             print("Opción no válida. Intente de nuevo.")
