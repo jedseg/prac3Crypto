@@ -5,7 +5,7 @@ import hashlib
 from P1 import point_addition, point_doubling
 from P2 import LR
 
-# ===== Parámetros de la curva NIST P-256 =====
+# Parámetros de la curva NIST P-256
 p = 115792089210356248762697446949407573530086143415290314195533631308867097853951
 a = p - 3
 b = 41058363725152142129326129780047268409114441015993725554835256314039467401291
@@ -15,7 +15,7 @@ Gy = 361342509567497957985851279195878819566111066729850150718771982535684144051
 G = (Gx, Gy, 1)
 
 
-# ===== Función 2: Generación de firma =====
+# Función 2: Generación de firma
 def signatureGeneration(archivo_priv, archivo_mensaje, archivo_firma):
     with open(archivo_priv) as f:
         d = base64_a_int(f.read().strip())
@@ -46,8 +46,41 @@ def base64_a_int(s):
     datos_binarios = base64.b64decode(s)
     return int.from_bytes(datos_binarios, byteorder='big')
 
+# Función 3: Veriricación de firma
+def signatureVerification(archivo_pub, archivo_mensaje, archivo_firma):
+    with open(archivo_pub, "r") as f:
+        lineas = f.readlines()
+    p = base64_a_int(lineas[0].strip())
+    a = base64_a_int(lineas[1].strip())
+    b = base64_a_int(lineas[2].strip())
+    n = base64_a_int(lineas[3].strip())
+    Gx = base64_a_int(lineas[4].strip())
+    Gy = base64_a_int(lineas[5].strip())
+    G = (Gx, Gy)
+    Bx = base64_a_int(lineas[6].strip())
+    By = base64_a_int(lineas[7].strip())
+    B = (Bx, By)
+    
+    with open(archivo_firma, "r") as f:
+        lineas = f.readlines()
+    r = base64_a_int(lineas[0].strip())
+    s = base64_a_int(lineas[1].strip())
 
-# ===== Función 1: Generación de llaves =====
+    with open(archivo_mensaje, "rb") as f:
+        contenido = f.read()
+    hash_bytes = hashlib.sha256(contenido).digest()
+    m = int.from_bytes(hash_bytes, byteorder='big') % n
+
+    w = pow(s, -1, n) % n
+    u1 = w * m % n
+    u2 = w * r % n
+    P = point_addition(a, b, p, LR(a, b, p, u1, G), LR(a, b, p, u2, B))
+    Px = P[0]
+
+    return Px == (r % n)
+
+
+# Función 1: Generación de llaves
 def keyGeneration(p, a, b, n, G, archivo_priv, archivo_pub):
     d = random.randint(1, n - 1)
     B = LR(a, b, p, d, G)
@@ -68,13 +101,31 @@ def keyGeneration(p, a, b, n, G, archivo_priv, archivo_pub):
 # Menú
 
 if __name__ == "__main__":
-    archivo_priv = input("Nombre del archivo para la llave privada: ")
-    archivo_pub = input("Nombre del archivo para la llave pública: ")
+    archivo_firma = ""
+    archivo_mensaje = ""
+    archivo_pub = ""
+    archivo_priv = ""
 
-    d, keyPub = keyGeneration(p, a, b, n, G, archivo_priv, archivo_pub)
+    while True:
+        print("1) Generar llaves\n2) Generar firma\n3) Verificar firma")
+        opc = int(input("Elige una opción: "))
+        if opc == 1:
+            print("\n--- Generación de llaves ---")
+            archivo_priv = input("Nombre del archivo para la llave privada: ")
+            archivo_pub = input("Nombre del archivo para la llave pública: ")
 
-    print("\n--- Generación de firma ---")
-    archivo_mensaje = input("Nombre del archivo a firmar: ")
-    archivo_firma = input("Nombre del archivo para guardar la firma: ")
-    r, s = signatureGeneration(archivo_priv, archivo_mensaje, archivo_firma)
-    print(f"r, s = {r}, {s}")
+            d, keyPub = keyGeneration(p, a, b, n, G, archivo_priv, archivo_pub)
+            break
+
+        elif opc == 2:
+            print("\n--- Generación de firma ---")
+            archivo_mensaje = input("Nombre del archivo a firmar: ")
+            archivo_firma = input("Nombre del archivo para guardar la firma: ")
+            r, s = signatureGeneration(archivo_priv, archivo_mensaje, archivo_firma)
+            print(f"r, s = {r}, {s}")
+            break
+
+        elif opc == 3:
+            print("\n--- Verificación de firma ---")
+            print(signatureGeneration(archivo_pub, archivo_mensaje, archivo_firma))
+            
