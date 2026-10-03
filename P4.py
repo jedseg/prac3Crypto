@@ -256,4 +256,9 @@ if __name__ == "__main__":
         elif opc == 3:
             print("\n--- Verificación de firma ---")
             print(signatureVerification(archivo_pub, archivo_mensaje, archivo_firma))
-            
+
+        elif opc == 4:
+            ecdh()
+
+        else:
+            print("Opción no válida. Intente de nuevo.")
